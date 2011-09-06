@@ -1,0 +1,90 @@
+#! /bin/sh
+#
+# nginx        Start/Stop nginx server
+#
+# chkconfig: - 35 65
+# description:  NGINX HTTP + Proxy Server
+#
+# processname: nginx
+
+# source function library
+if [ -f /etc/rc.d/init.d/functions ]
+then
+        . /etc/rc.d/init.d/functions
+        BOOTUP="color"
+else
+        SETCOLOR_WARNING=
+        SETCOLOR_NORMAL=
+        SETCOLOR_SUCCESS=
+        MOVE_TO_COL=
+        BOOTUP=
+        success() { echo [  OK  ] ; }
+        failure() { echo [  OK  ] ; }
+fi
+
+HOST=`hostname`
+prog="nginx"
+BIN=/usr/local/nginx/sbin/nginx
+
+thishost() { $SETCOLOR_WARNING ; echo -n "$HOST" ; $SETCOLOR_NORMAL ;}
+
+
+start() {
+        echo -n $"$(thishost) Starting $prog:"
+        "$BIN" && success || failure
+        RETVAL=$?
+        [ "$RETVAL" = 0 ] && touch /var/lock/subsys/nginx
+        echo
+}
+
+stop() {
+        echo -n $"$(thishost) Stopping $prog:"
+        $BIN -s stop && success || failure
+        RETVAL=$?
+        [ "$RETVAL" = 0 ] && rm -f /var/lock/subsys/nginx
+        echo
+}
+
+reload() {
+        echo -n $"$(thishost) Reloading $prog:"
+	test ! -f /var/run/nginx.pid || kill -HUP `cat /var/run/nginx.pid` && success || failure
+        echo
+}
+
+reopen() {
+        echo -n $"$(thishost) Reopen $prog:"
+        test ! -f /var/run/nginx.pid || kill -USR1 `cat /var/run/nginx.pid` && success || failure
+        echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        exit 0
+        ;;
+  stop)
+        stop
+        exit 0
+        ;;
+  restart)
+        stop
+        sleep 2
+        start
+        exit 0
+        ;;
+  reload)
+        reload
+        exit 0
+        ;;
+  reopen)
+        reopen
+        exit 0
+        ;;
+  *)
+        echo  $"Usage: $0 {start|stop|restart|reload|reopen}"
+        exit 1
+esac
+
+exit $RETVAL
+
